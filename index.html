@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Repo Explorer</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+#sidebar {
+  width: 300px;
+  overflow: auto;
+  border-right: 1px solid #1e293b;
+  padding: 10px;
+}
+
+#main {
+  flex: 1;
+  padding: 15px;
+  overflow: auto;
+}
+
+h1 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #38bdf8;
+}
+
+input {
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 10px;
+  background: #1e293b;
+  border: none;
+  color: white;
+}
+
+ul {
+  list-style: none;
+  padding-left: 15px;
+}
+
+li {
+  cursor: pointer;
+  margin: 3px 0;
+}
+
+.folder::before { content: "📁 "; }
+.file::before { content: "📄 "; }
+
+pre {
+  white-space: pre-wrap;
+  background: #020617;
+  padding: 10px;
+  border-radius: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar">
+  <h1>📂 Repo Explorer</h1>
+  <input type="text" id="search" placeholder="Search files...">
+  <ul id="tree"></ul>
+</div>
+
+<div id="main">
+  <h2>📄 File Viewer</h2>
+  <pre id="content">Click a file to view content</pre>
+</div>
+
+<script>
+const USER = "shivamiitmandi";
+const REPO = "dl";
+
+const cache = {};
+
+async function fetchContents(path = "") {
+  if (cache[path]) return cache[path];
+
+  const res = await fetch(
+    `https://api.github.com/repos/${USER}/${REPO}/contents/${path}`
+  );
+  const data = await res.json();
+  cache[path] = data;
+  return data;
+}
+
+async function fetchFile(url) {
+  const res = await fetch(url);
+  return await res.text();
+}
+
+async function buildTree(container, path = "") {
+  const items = await fetchContents(path);
+
+  for (const item of items) {
+    const li = document.createElement("li");
+
+    if (item.type === "dir") {
+      li.textContent = item.name;
+      li.classList.add("folder");
+
+      const ul = document.createElement("ul");
+      ul.style.display = "none";
+
+      li.onclick = async (e) => {
+        e.stopPropagation();
+
+        if (!ul.childElementCount) {
+          await buildTree(ul, item.path);
+        }
+
+        ul.style.display =
+          ul.style.display === "none" ? "block" : "none";
+      };
+
+      li.appendChild(ul);
+
+    } else {
+      li.textContent = item.name;
+      li.classList.add("file");
+
+      li.onclick = async (e) => {
+        e.stopPropagation();
+
+        document.getElementById("content").textContent =
+          "Loading...";
+
+        const text = await fetchFile(item.download_url);
+
+        document.getElementById("content").textContent = text;
+      };
+    }
+
+    container.appendChild(li);
+  }
+}
+
+// 🔍 SEARCH
+document.getElementById("search").addEventListener("input", async function () {
+  const query = this.value.toLowerCase();
+  const tree = document.getElementById("tree");
+  tree.innerHTML = "";
+
+  const items = await fetchContents("");
+
+  function filter(items) {
+    return items.filter(item =>
+      item.name.toLowerCase().includes(query)
+    );
+  }
+
+  const filtered = filter(items);
+
+  for (const item of filtered) {
+    const li = document.createElement("li");
+    li.textContent = item.name;
+    li.className = item.type;
+
+    if (item.type === "file") {
+      li.onclick = async () => {
+        const text = await fetchFile(item.download_url);
+        document.getElementById("content").textContent = text;
+      };
+    }
+
+    tree.appendChild(li);
+  }
+});
+
+// INIT
+buildTree(document.getElementById("tree"));
+</script>
+
+</body>
+</html>

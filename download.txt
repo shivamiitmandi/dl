@@ -1,0 +1,17 @@
+python download.py ./FaceForensics++ -d original -c c23 -t videos && \
+python download.py ./FaceForensics++ -d Deepfakes -c c23 -t videos && \
+python download.py ./FaceForensics++ -d Face2Face -c c23 -t videos && \
+python download.py ./FaceForensics++ -d FaceSwap -c c23 -t videos && \
+python download.py ./FaceForensics++ -d NeuralTextures -c c23 -t videos    
+
+
+
+
+
+python download.py ./FaceForensics++ -d original -c c23 -t videos -n 50 && \
+python download.py ./FaceForensics++ -d Deepfakes -c c23 -t videos -n 50 && \
+python download.py ./FaceForensics++ -d Face2Face -c c23 -t videos -n 50 && \
+python download.py ./FaceForensics++ -d FaceSwap -c c23 -t videos -n 50 && \
+python download.py ./FaceForensics++ -d NeuralTextures -c c23 -t videos -n 50
+
+smaller
