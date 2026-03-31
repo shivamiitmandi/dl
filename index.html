@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Repo Explorer</title>
 
+<!-- Highlight.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
 <style>
 body {
   margin: 0;
@@ -29,7 +33,6 @@ body {
 
 h1 {
   font-size: 18px;
-  margin-bottom: 10px;
   color: #38bdf8;
 }
 
@@ -56,10 +59,10 @@ li {
 .file::before { content: "📄 "; }
 
 pre {
-  white-space: pre-wrap;
   background: #020617;
   padding: 10px;
   border-radius: 5px;
+  overflow-x: auto;
 }
 </style>
 </head>
@@ -74,12 +77,19 @@ pre {
 
 <div id="main">
   <h2>📄 File Viewer</h2>
-  <pre id="content">Click a file to view content</pre>
+  <pre><code id="codeBlock">Click a file to view content</code></pre>
 </div>
 
 <script>
 const USER = "shivamiitmandi";
 const REPO = "dl";
+
+// 🔐 OPTIONAL TOKEN (see below)
+const TOKEN = "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"; // paste token here if needed
+
+const headers = TOKEN ? {
+  Authorization: "token " + TOKEN
+} : {};
 
 const cache = {};
 
@@ -87,8 +97,10 @@ async function fetchContents(path = "") {
   if (cache[path]) return cache[path];
 
   const res = await fetch(
-    `https://api.github.com/repos/${USER}/${REPO}/contents/${path}`
+    `https://api.github.com/repos/${USER}/${REPO}/contents/${path}`,
+    { headers }
   );
+
   const data = await res.json();
   cache[path] = data;
   return data;
@@ -132,12 +144,15 @@ async function buildTree(container, path = "") {
       li.onclick = async (e) => {
         e.stopPropagation();
 
-        document.getElementById("content").textContent =
-          "Loading...";
+        const codeEl = document.getElementById("codeBlock");
+        codeEl.textContent = "Loading...";
 
         const text = await fetchFile(item.download_url);
 
-        document.getElementById("content").textContent = text;
+        codeEl.textContent = text;
+
+        // 🌈 highlight
+        hljs.highlightElement(codeEl);
       };
     }
 
@@ -145,7 +160,7 @@ async function buildTree(container, path = "") {
   }
 }
 
-// 🔍 SEARCH
+// 🔍 SEARCH (basic)
 document.getElementById("search").addEventListener("input", async function () {
   const query = this.value.toLowerCase();
   const tree = document.getElementById("tree");
@@ -153,31 +168,19 @@ document.getElementById("search").addEventListener("input", async function () {
 
   const items = await fetchContents("");
 
-  function filter(items) {
-    return items.filter(item =>
-      item.name.toLowerCase().includes(query)
-    );
-  }
-
-  const filtered = filter(items);
+  const filtered = items.filter(item =>
+    item.name.toLowerCase().includes(query)
+  );
 
   for (const item of filtered) {
     const li = document.createElement("li");
     li.textContent = item.name;
     li.className = item.type;
 
-    if (item.type === "file") {
-      li.onclick = async () => {
-        const text = await fetchFile(item.download_url);
-        document.getElementById("content").textContent = text;
-      };
-    }
-
     tree.appendChild(li);
   }
 });
 
-// INIT
 buildTree(document.getElementById("tree"));
 </script>
 
