@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#141e2e',
+                            900: '#0f172a',
+                        },
+                        teal: {
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+        .btn-custom {
+            background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+            color: white;
+            border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+            color: white;
+        }
+        .nav-tabs .nav-link {
+            color: #94a3b8;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+        }
+        .nav-tabs .nav-link.active {
+            color: #2dd4bf;
+            background: transparent;
+            border-bottom: 2px solid #2dd4bf;
+        }
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            color: #f8fafc;
+        }
+        #result-card {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center py-10 px-4">
+
+    <div class="container max-w-3xl glass-panel p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-400">
+                Deepfake Detector
+            </h1>
+            <p class="text-slate-400">Analyze images and videos for authenticity using state-of-the-art AI models.</p>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-6 justify-content-center" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-5 py-3" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-pane" type="button" role="tab" aria-controls="image-pane" aria-selected="true">Image Analysis</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-5 py-3" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-pane" type="button" role="tab" aria-controls="video-pane" aria-selected="false">Video Analysis</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <!-- Image Form -->
+            <div class="tab-pane fade show active" id="image-pane" role="tabpanel" aria-labelledby="image-tab" tabindex="0">
+                <form id="image-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Select Image Model</label>
+                        <select name="model_choice" class="form-select bg-slate-800 border-slate-700 text-slate-200 rounded-lg shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="DINO">DINO ViT-B/16 (Best Accuracy)</option>
+                            <option value="FFT">FFT ResNet18 (Frequency Analysis)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Upload Image</label>
+                        <input class="form-control bg-slate-800 border-slate-700 text-slate-200 rounded-lg" type="file" name="file" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-custom w-100 py-3 rounded-lg font-bold text-lg d-flex justify-content-center align-items-center">
+                        <span class="btn-text">Analyze Image</span>
+                        <div class="spinner-border spinner-border-sm text-light ms-2 spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Video Form -->
+            <div class="tab-pane fade" id="video-pane" role="tabpanel" aria-labelledby="video-tab" tabindex="0">
+                <form id="video-form" class="space-y-5">
+                    <div>
+                        <div class="alert alert-info bg-slate-800 border-slate-700 text-slate-300" role="alert">
+                            <strong>Note:</strong> Video analysis uses the DINO-GRU sequential model. Processing may take a few moments.
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Upload Video</label>
+                        <input class="form-control bg-slate-800 border-slate-700 text-slate-200 rounded-lg" type="file" name="file" accept="video/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-custom w-100 py-3 rounded-lg font-bold text-lg d-flex justify-content-center align-items-center">
+                        <span class="btn-text">Analyze Video</span>
+                        <div class="spinner-border spinner-border-sm text-light ms-2 spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="result-card" class="mt-8 p-6 rounded-xl bg-slate-800 border border-slate-700 shadow-lg text-center">
+            <h3 class="text-xl font-semibold text-slate-400 mb-2">Analysis Result</h3>
+            <div id="verdict" class="text-5xl font-bold mb-4 tracking-tight"></div>
+            <div class="flex justify-center gap-6 text-sm text-slate-300">
+                <div>Confidence: <span id="confidence" class="font-bold text-white"></span>%</div>
+                <div>Model: <span id="used-model" class="font-bold text-white"></span></div>
+            </div>
+            
+            <!-- Temporal Heatmap Section -->
+            <div id="heatmap-section" class="mt-8 hidden">
+                <h4 class="text-lg font-semibold text-slate-300 mb-4">Temporal Attention Heatmap</h4>
+                <div id="heatmap-grid" class="grid grid-cols-4 gap-2">
+                    <!-- frames will be injected here -->
+                </div>
+                <p class="text-xs text-slate-400 mt-3">Red highlight indicates frames that the model paid the most attention to.</p>
+            </div>
+
+            <div id="error-msg" class="text-red-400 mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function showLoading(formId) {
+            const form = document.getElementById(formId);
+            form.querySelector('.btn-text').style.display = 'none';
+            form.querySelector('.spinner').style.display = 'inline-block';
+            form.querySelector('button').disabled = true;
+            document.getElementById('result-card').style.display = 'none';
+            document.getElementById('error-msg').classList.add('hidden');
+        }
+
+        function hideLoading(formId) {
+            const form = document.getElementById(formId);
+            form.querySelector('.btn-text').style.display = 'inline-block';
+            form.querySelector('.spinner').style.display = 'none';
+            form.querySelector('button').disabled = false;
+        }
+
+        function displayResult(data) {
+            const card = document.getElementById('result-card');
+            const verdictEl = document.getElementById('verdict');
+            const confEl = document.getElementById('confidence');
+            const modelEl = document.getElementById('used-model');
+            const errorEl = document.getElementById('error-msg');
+
+            card.style.display = 'block';
+
+            if (data.error) {
+                verdictEl.textContent = 'Error';
+                verdictEl.className = 'text-5xl font-bold mb-4 tracking-tight text-red-500';
+                confEl.textContent = '-';
+                modelEl.textContent = '-';
+                errorEl.textContent = data.error;
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            verdictEl.textContent = data.prediction;
+            if (data.prediction === 'FAKE') {
+                verdictEl.className = 'text-5xl font-bold mb-4 tracking-tight text-red-500';
+            } else {
+                verdictEl.className = 'text-5xl font-bold mb-4 tracking-tight text-emerald-400';
+            }
+
+            confEl.textContent = data.confidence;
+            modelEl.textContent = data.model;
+            
+            // Clear previous heatmap
+            const heatmapSection = document.getElementById('heatmap-section');
+            const heatmapGrid = document.getElementById('heatmap-grid');
+            heatmapGrid.innerHTML = '';
+            
+            if (data.frames) {
+                heatmapSection.classList.remove('hidden');
+                document.querySelector('#heatmap-section h4').textContent = data.spatial_heatmaps ? 'Spatial Attention Heatmap (Grad-CAM)' : 'Temporal Attention Heatmap';
+                document.querySelector('#heatmap-section p').textContent = data.spatial_heatmaps ? 'Heatmap shows which spatial regions were most important.' : 'Red highlight indicates frames that the model paid the most attention to.';
+                
+                let weights = [];
+                let maxAtt = 0;
+                if (data.attentions) {
+                    weights = data.attentions.map(a => Array.isArray(a) ? a[0] : a);
+                    maxAtt = Math.max(...weights);
+                }
+                
+                for (let i = 0; i < data.frames.length; i++) {
+                    const frameBase64 = data.frames[i];
+                    let opacity = 0;
+                    
+                    if (data.attentions && maxAtt > 0) {
+                        const weight = weights[i];
+                        opacity = (weight / maxAtt).toFixed(2);
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = 'relative rounded overflow-hidden shadow-sm aspect-square bg-black flex items-center justify-center';
+                    
+                    const img = document.createElement('img');
+                    img.src = 'data:image/jpeg;base64,' + frameBase64;
+                    img.className = 'w-full h-full object-cover';
+                    
+                    div.appendChild(img);
+                    
+                    if (!data.spatial_heatmaps) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'absolute inset-0 bg-red-500 mix-blend-multiply pointer-events-none transition-opacity duration-300';
+                        overlay.style.opacity = opacity;
+                        div.appendChild(overlay);
+                    }
+                    
+                    heatmapGrid.appendChild(div);
+                }
+            } else {
+                heatmapSection.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('image-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading('image-form');
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/predict/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                displayResult(data);
+            } catch (err) {
+                displayResult({error: 'Failed to connect to the server.'});
+            }
+            hideLoading('image-form');
+        });
+
+        document.getElementById('video-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading('video-form');
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch('/predict/video', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                displayResult(data);
+            } catch (err) {
+                displayResult({error: 'Failed to connect to the server.'});
+            }
+            hideLoading('video-form');
+        });
+    </script>
+</body>
+</html>
