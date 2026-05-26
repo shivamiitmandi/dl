@@ -25,14 +25,6 @@ This repository contains the following approaches, each contained in its own mod
 * **`model4_ssl_fft/`**: An advanced multi-modal approach. It utilizes Self-Supervised Learning (SimCLR) to pre-train a ResNet-50 backbone. This is then combined with an FFT branch and Cross-Attention mechanisms. It also includes `grandcam.py` to generate Grad-CAM heatmaps to visualize exactly what the model focuses on when predicting "Fake."
 * **`model5_baseline/`**: A direct PyTorch port of a popular Keras baseline ResNet-50 model. It serves as a benchmark to evaluate the performance gains of the custom architectures.
 
-### Video-Level Temporal Detection
-* **`Master_Video_Dataset/`**: This directory contains our temporal video processing approach. 
-  - Instead of looking at single images, it extracts a sequence of frames from a video.
-  - It passes each frame through a **frozen DINO ViT-B/16 backbone** to extract rich 768-dimensional spatial feature vectors.
-  - These vectors are fed sequentially into a **Recurrent Neural Network (LSTM or GRU with Attention)** to detect temporal inconsistencies—flickering, unnatural micro-expressions, or sudden lighting changes—that frame-by-frame models miss.
-  - Includes an interactive `app.py` for testing.
-
----
 
 ## 3. Core Dependencies & Scripts
 
